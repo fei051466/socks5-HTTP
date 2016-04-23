@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from multiprocessing import Process, Queue
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 import SocketServer
@@ -8,8 +10,31 @@ import urllib
 import requests
 import time
 
-# q = Queue()
+from flask import Flask
+from flask.ext.restful import Api, Resource, reqparse
 
+
+q = Queue()
+
+app = Flask(__name__)
+api = Api(app)
+
+parser = reqparse.RequestParser()
+parser.add_argument（'data', type=str)
+
+class post_data(Resource):
+    def post(self):
+        args = parser.parse_args()
+        data = args['data']
+        if data == 'newconnection':
+            print 'got newconnection'
+            p = Process(target=socks_client, args=(q,))
+            p.start()
+        else:
+            q.put(data)
+        return {'msg': args['msg']}
+
+api.add_resource(post_data, '/api/data/')
 
 def sent_all_in_http_post_format(data):
 
@@ -82,14 +107,6 @@ def http_server():
 
 if __name__ == '__main__':
 
-    #p1 = Process(target=http_server, args=(q,))
-    #p1.start()
-    # p1.join()
+    # http_server()
 
-    #p = Process(target=socks_client, args=(q,))
-    #p.start()
-    # p.join()
-
-    #exit()
-
-    http_server()
+    app.run(host='127.0.0.1', port=8000)
